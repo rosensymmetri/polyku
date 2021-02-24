@@ -1,9 +1,8 @@
-use rand::prelude::*;
-use std::collections::HashMap;
-
 use abstalg::Integers;
-use num::bigint::Sign;
+use anyhow::Result;
+use clap::{app_from_crate, crate_authors, crate_description, crate_name, crate_version, Arg};
 use num::BigInt;
+use std::collections::HashMap;
 
 mod mask; // defines nodes and masks over squares of nodes
 mod poly;
@@ -34,12 +33,32 @@ fn generate_random_polyku_pdf(size: usize, coeffs: Vec<isize>) -> Vec<u8> {
     tex::pdf_doc(size, coeffs, tiles, clues, boundaries, ans)
 }
 
-fn main() -> std::io::Result<()> {
-    let size = 3;
-    let coeffs = vec![1, 2, 3, 4, 5, 6];
+fn main() -> Result<()> {
+    let matches = app_from_crate!()
+        .arg(
+            Arg::with_name("size")
+                .required(true)
+                .index(1)
+                .help("The size of the puzzle."),
+        )
+        .arg(
+            Arg::with_name("out")
+                .short("o")
+                .long("out")
+                .required(false)
+                .takes_value(true)
+                .value_name("path")
+                .help("Output location. Defaults to 'polyku.pdf'. Will overwrite."),
+        )
+        .get_matches();
 
-    std::fs::write("test.pdf", generate_random_polyku_pdf(size, coeffs))?;
+    let size = matches.value_of("size").unwrap().parse()?;
+    let coeffs = (1..=2 * size).into_iter().map(|i| i as isize).collect();
+    let path = matches.value_of("out").or(Some("polyku.pdf")).unwrap();
 
+    std::fs::write(path, generate_random_polyku_pdf(size, coeffs))?;
+
+    println!("Wrote to '{}'.", path);
     Ok(())
 }
 

@@ -3,19 +3,15 @@ name = "polyku"
 version = "0.1.0"
 authors = ["rosensymmetri <o.berndal@gmail.com>"]
 edition = "2018"
+description = "A very simple command line tool for generating a polyku puzzle."
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
-[lib]
-name = "polyku_gen"
-crate-type = ["cdylib"]
 
 [dependencies]
 rand = "0.7"
 abstalg = "0.1"
 num = "0.3"
 itertools = "0.8"
-
-[dependencies.pyo3]
-version = "0.12"
-features = ["extension-module"]
+texrender = "0.3"
+clap = "~2.33.3"
+anyhow = "~1.0.38"
