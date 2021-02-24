@@ -54,11 +54,31 @@ fn main() -> Result<()> {
 
     let size = matches.value_of("size").unwrap().parse()?;
     let coeffs = (1..=2 * size).into_iter().map(|i| i as isize).collect();
-    let path = matches.value_of("out").or(Some("polyku.pdf")).unwrap();
+    let file_path = matches.value_of("out").or(Some("polyku.pdf")).unwrap();
 
-    std::fs::write(path, generate_random_polyku_pdf(size, coeffs))?;
+    let here = std::env::current_dir()?.canonicalize()?;
 
-    println!("Wrote to '{}'.", path);
+    let build_path = extend_path_until_fresh("polyku-temp");
+    std::fs::create_dir(&build_path)?;
+    let build_path = std::path::Path::new(&build_path).canonicalize()?;
+
+    let process: std::io::Result<()> = {
+        let mut bytes = Vec::new();
+        std::env::set_current_dir(&build_path)
+            .and({
+                bytes = generate_random_polyku_pdf(size, coeffs);
+                std::env::set_current_dir(here)
+            })
+            .and(std::fs::write(file_path, bytes))
+    };
+
+    match process {
+        Err(e) => println!("{}", e),
+        _ => println!("Wrote to '{}'.", file_path),
+    }
+
+    std::fs::remove_dir_all(&build_path)?;
+
     Ok(())
 }
 
@@ -136,4 +156,13 @@ fn op_tex_string(op: poly::Op) -> String {
         poly::Op::Sub => "-".to_string(),
         poly::Op::Mul => r"\times".to_string(),
     }
+}
+
+fn extend_path_until_fresh(try_path: &str) -> String {
+    let mut path = try_path.to_owned();
+    while std::path::Path::new(&path).exists() {
+        path.push(rand::random::<char>());
+    }
+
+    path
 }

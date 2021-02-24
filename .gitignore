@@ -3,3 +3,4 @@ test*
 *.lock
 missfont.log
 polyku.pdf
+*.pdf
